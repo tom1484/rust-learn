@@ -1,5 +1,3 @@
-mod template;
-
 struct Check {
     name: String,
     description: String,
@@ -15,7 +13,7 @@ struct Progress {
 trait Todo {
     fn new(name: String, description: String) -> Self;
 
-    fn to_string(&self) -> String;
+    fn to_string(&self, index: usize) -> String;
     fn done(&self) -> bool;
 
     fn set_status(&mut self);
@@ -30,9 +28,12 @@ impl Todo for Check {
         }
     }
 
-    fn to_string(&self) -> String {
+    fn to_string(&self, index: usize) -> String {
         let status = if self.done() { "[X]" } else { "[ ]" };
-        format!("{} {}:\n\t{}", status, self.name, self.description)
+        format!(
+            "{}. {} {}:\n\t{}",
+            index, status, self.name, self.description
+        )
     }
 
     fn done(&self) -> bool {
@@ -68,11 +69,11 @@ impl Todo for Progress {
         }
     }
 
-    fn to_string(&self) -> String {
+    fn to_string(&self, index: usize) -> String {
         let status = if self.done() { "[X]" } else { "[ ]" };
         format!(
-            "{} {}:\n\t{}\n\tProgress: {:3}%",
-            status, self.name, self.description, self.progress
+            "{}. {} {}:\n\t{}\n\tProgress: {:3}%",
+            index, status, self.name, self.description, self.progress
         )
     }
 
@@ -96,11 +97,6 @@ impl Todo for Progress {
     }
 }
 
-enum TodoItem {
-    Check(Check),
-    Progress(Progress),
-}
-
 fn stdin() -> String {
     let mut input = String::new();
     std::io::stdin().read_line(&mut input).unwrap_or(0);
@@ -114,10 +110,28 @@ fn string_to_u8(input: String) -> Option<u8> {
     }
 }
 
+fn create_todo<T: Todo>(todo_list: &mut Vec<T>) {
+    println!("Name: ");
+    let name = stdin();
+
+    println!("Description: ");
+    let description = stdin();
+
+    let check = T::new(name, description);
+    todo_list.push(check);
+}
+
 fn main() {
-    let mut todo_list: Vec<TodoItem> = Vec::new();
+    // let mut todo_list: Vec<TodoItem> = Vec::new();
+    // let mut todo_list: Vec<TodoItem> = Vec::new();
+    let mut check_list: Vec<Check> = Vec::new();
+    let mut progress_list: Vec<Progress> = Vec::new();
 
     loop {
+        let check_list_len = check_list.len();
+        let progress_list_len = progress_list.len();
+        let todo_list_len = check_list_len + progress_list_len;
+
         println!("What do you want to do?");
         println!("1. Add new todo");
         println!("2. Edit todo");
@@ -136,47 +150,29 @@ fn main() {
 
                 match input.as_str() {
                     "1" => {
-                        println!("Name: ");
-                        let name = stdin();
-
-                        println!("Description: ");
-                        let description = stdin();
-
-                        let check = Check::new(name, description);
-                        todo_list.push(TodoItem::Check(check));
+                        create_todo(&mut check_list);
                     }
                     "2" => {
-                        println!("Name: ");
-                        let name = stdin();
-
-                        println!("Description: ");
-                        let description = stdin();
-
-                        let progress = Progress::new(name, description);
-                        todo_list.push(TodoItem::Progress(progress));
+                        create_todo(&mut progress_list);
                     }
                     _ => println!("Invalid input"),
                 }
             }
             "2" => {
-                println!(
-                    "Which todo do you want to edit? [0-{}]",
-                    todo_list.len() - 1
-                );
+                println!("Which todo do you want to edit? [1-{}]", todo_list_len);
                 let input = stdin();
 
                 match string_to_u8(input) {
                     Some(index) => {
-                        if index < todo_list.len() as u8 {
-                            let todo = &mut todo_list[index as usize];
+                        let index = index - 1;
 
-                            match todo {
-                                TodoItem::Check(check) => {
-                                    check.set_status();
-                                }
-                                TodoItem::Progress(progress) => {
-                                    progress.set_status();
-                                }
+                        if index <= todo_list_len as u8 {
+                            if index < check_list_len as u8 {
+                                let check = &mut check_list[index as usize];
+                                check.set_status();
+                            } else {
+                                let progress = &mut progress_list[index as usize - check_list_len];
+                                progress.set_status();
                             }
                         } else {
                             println!("Invalid index");
@@ -186,11 +182,11 @@ fn main() {
                 }
             }
             "3" => {
-                for todo in todo_list.iter() {
-                    match todo {
-                        TodoItem::Check(check) => println!("{}", check.to_string()),
-                        TodoItem::Progress(progress) => println!("{}", progress.to_string()),
-                    }
+                for (index, check) in check_list.iter().enumerate() {
+                    println!("{}", check.to_string(index + 1));
+                }
+                for (index, progress) in progress_list.iter().enumerate() {
+                    println!("{}", progress.to_string(index + 1 + check_list_len));
                 }
             }
             "4" => break,
