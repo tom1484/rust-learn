@@ -1,5 +1,17 @@
 # Week 4
 
+## practice 1
+
+Implement BFS, DFS, and traverse in ```algo``` module with the ```Node``` type with implemented in class
+
+## practice 2
+
+Create a pool that can run multi-thread jobs with limited workers
+
+Each worker runs on job at a time
+
+Keep finding unfinished jobs and assign to idle worker
+
 ## Some keypoints I didn't mentioned...
 
 ### Send and Sync trait
