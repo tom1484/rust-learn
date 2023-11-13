@@ -14,7 +14,7 @@ Types with ```Send``` implemented is safe to be moved to another thread, for exa
 
 When using generic on closure, the input and output type of the closure is written in trait bound, for example
 
-```
+```rust
 fn run<F>(f: F, val: i32)
 where
   F: Fn(i32) -> String  // takes i32 and return String
